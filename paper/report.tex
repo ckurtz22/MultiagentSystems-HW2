@@ -51,7 +51,7 @@
 
 \begin{abstract}
 I implement a simple game of tag, and a Q-learning implementation of 
-reinforcement learning to teach 1 to 2 players how to catch the target.
+reinforcement learning to teach 1 to 2 players how to catch a moving target.
 
 \end{abstract}
 
@@ -110,7 +110,9 @@ network for this, and specifically I chose Q-learning as it seemed
 like the most common method. The state of the system is represented 
 with the location of each agent within the gridworld. I consider both
 the target and the players to all be agents, so each player and see 
-each other and the target at all times.
+each other and the target at all times. \cite{SimpleQlearning}~was quite
+helpful as a resource for me to reference for implementing the algorithm,
+as well as the lecture recordings from class.
 
 The state is transformed into an integer to index the Q-table with. The 
 Q-table is a $Nx4$ table of floats, where $N=(GRID\_X * GRID\_Y)^
@@ -153,18 +155,45 @@ reach the goal for the first $1000$ cycles. The baseline of $33$ moves is
 overtaken around $3000$ cycles in, and they stabilize to only needing $20$
 moves on average after about $20000$ cycles.
 
-For the scenario where there is a system goal, it seems to impact the players
-positively at first, but in the long term it impacts them quite negatively. 
-For the first $1000$ or so cycles the players only need between $30$ and $40$
-turns to reach the goal, which was better than when they had individual rewards.
-However, long term they stabilize at one of them only being able to reach the 
-goal within $28$ steps on average after around $3000$ cycles.
+For the scenario where there is a system goal, it seems to overall impact 
+the players slightly negatively. It takes this system around $2000$ cycles 
+to improve past $40$ steps to reach the target on average, as opposed to 
+$1000$ for the individual reward system. Performance gains seem to stagnate 
+at around $23$ steps by about $20000$ iterations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Analysis}
 
+With a single player it's quite hard to tell what the agent is doing. Even though
+it is doing fairly well, at least compared to the baseline of random inputs, the 
+player still seems erratic in behavior. Sometimes it seems it is somewhat shadowing 
+the target, but oftentimes it will just sporadically move away from the target.
 
+When using two players it is also pretty hard to see what is going on. It does seem 
+like there might be some implicit cooperation, as sometimes I will notice the agents 
+appearing to try and "corner" the target and prevent it from slipping out, but a lot 
+of the time one of the players will just seemingly run to the opposite side of the map 
+while the other one chases down the target. It's possible this could be viewed as a 
+form of cooperation though, as perhaps the players are not sure where exactly the target 
+is and are trying to cover more of the map at once. The players do clearly get quite 
+good at the game though, being pretty consistent that one of them catches the target 
+quite early.
+
+Adding the system reward which ties together both players was very interesting to 
+observe. Initially I had actually had a bug in my code where the players were 
+receiving a free 30 points every time step due to my implementation treating the target
+as an agent as well. This actually had a positive impact on the players for earlier cycles,
+but their overall performance was much more limited than individual rewards, only allowing 
+the players to improve from around 40 steps on average at worst to about 27 steps after 
+20000 cycles. 
+
+Once I fixed this bug, the performance of the two players with a shared system reward
+seemed to follow when they had unique rewards, only with requiring slightly more steps
+on average each cycle. The players definitely do not seem to benefit from sharing the 
+reward between them as overall it decreases performance. This is likely because the 
+player who does not catch the target will get a massive reward for doing something that
+is likely quite random, enforcing that behavior for no reason.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -184,52 +213,11 @@ https://github.com/ckurtz22/MultiagentSystems-HW2
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Citations and References}
-  
-The use of the \BibTeX\ to prepare your list of references is highly 
-recommended. To include the references at the end of your document, put 
-the following two commands just before the `\verb|\end{document}|' 
-command in your source file:
-%
-\begin{verbatim}
-   \bibliographystyle{ACM-Reference-Format}
-   \bibliography{mybibfile}
-\end{verbatim}
-%
-Here we assume that `\texttt{mybibfile.bib}' is the name of your 
-\BibTeX\ file. Use the `\verb|\cite|' command to produce citations 
-to your references. Here are a few examples for citations of journal 
-articles~\cite{GrKr96,WoJe95}, books~\cite{Knu97}, articles in 
-conference proceedings~\cite{Hag1993}, technical reports~\cite{Har78},
-Master's and PhD theses~\cite{Ani03,Cla85}, online videos~\cite{Oba08}, 
-datasets~\cite{AnMC13}, and patents~\cite{Sci09}. Both citations and 
-references are numbered by default. 
-
-Make sure you provide complete and correct bibliographic information 
-for all your references, and list authors with their full names 
-(``Donald E.\ Knuth'') rather than just initials (``D.\ E.\ Knuth''). 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%% The acknowledgments section is defined using the "acks" environment
-%%% (rather than an unnumbered section). The use of this environment 
-%%% ensures the proper identification of the section in the article 
-%%% metadata as well as the consistent spelling of the heading.
-
-\begin{acks}
-If you wish to include any acknowledgments in your paper (e.g., to 
-people or funding agencies), please do so using the `\texttt{acks}' 
-environment. Note that the text of your acknowledgments will be omitted
-if you compile your document with the `\texttt{anonymous}' option.
-\end{acks}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %%% The next two lines define, first, the bibliography style to be 
 %%% applied, and, second, the bibliography file to be used.
 
 \bibliographystyle{ACM-Reference-Format} 
-\bibliography{sample}
+\bibliography{report}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     {
         total += game.doEpoch(iter > 50000);
         // std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        if (iter++ % 1000 == 0)
+        if (iter++ % 100 == 0)
         {
             clear();
             printw("Average: %f\ttotal: %d\n", (float)total / (float)iter, iter);

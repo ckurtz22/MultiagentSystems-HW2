@@ -115,7 +115,7 @@
     \PackageInfo{\@classname}{Not using nonacm mode}%
   \fi}{\PackageError{\@classname}{The option nonacm can be either true or
     false}}
-\ExecuteOptionsX{nonacm=false}
+\ExecuteOptionsX{nonacm=true}
 \define@boolkey+{aamas.cls}[@ACM@]{balance}[true]{}{%
   \PackageError{\@classname}{The option balance can be either true or
     false}}

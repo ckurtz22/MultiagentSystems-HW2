@@ -102,7 +102,8 @@ int mas::Game::update()
         {
             if (a == agents_[0])
             {
-                reward += 30;
+                if (a.agent_id_ != 0)
+                    reward += 30;
                 goal_reached = a.agent_id_;
             }
             else
@@ -170,6 +171,8 @@ int mas::Game::doEpoch(bool print_game)
         // keep iterating till update returns a non zero agent reached goal
     } while (update() == 0);
 
+    if (print_game)
+            std::this_thread::sleep_for(std::chrono::seconds(2));
     // printw("agent %d reached goal in %d iterations\n", goal_reached, steps_);
     // refresh();
     return steps_;

@@ -5,6 +5,8 @@
 #include <thread>
 #include <chrono>
 
+const bool SYSTEM_REWARD = true;
+
 mas::Game::Game(int num_players, float epsilon, float lr, float gamma)
 {
     steps_ = 0;
@@ -93,16 +95,39 @@ int mas::Game::update()
     }
 
     // update score for each agent in new state
-    for (auto &a : agents_)
+    if (SYSTEM_REWARD)
     {
-        if (a == agents_[0])
+        int reward = 0;
+        for (auto &a : agents_)
         {
-            goal_reached = a.agent_id_;
-            a.addScore(30);
+            if (a == agents_[0])
+            {
+                reward += 30;
+                goal_reached = a.agent_id_;
+            }
+            else
+            {
+                reward += -1;
+            }
         }
-        else
+        for (auto &a : agents_)
         {
-            a.addScore(-1);
+            a.addScore(reward);
+        }
+    }
+    else
+    {
+        for (auto &a : agents_)
+        {
+            if (a == agents_[0])
+            {
+                goal_reached = a.agent_id_;
+                a.addScore(30);
+            }
+            else
+            {
+                a.addScore(-1);
+            }
         }
     }
     // get new state for Q update

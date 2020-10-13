@@ -8,26 +8,22 @@
 mas::Game::Game(int num_players, float epsilon, float lr, float gamma)
 {
     steps_ = 0;
-    agents_.clear();
-    for (int i = 0; i < GRID_X; ++i)
-    {
-        for (int j = 0; j < GRID_Y; ++j)
-        {
-            game_board_[i][j].clear();
-        }
-    }
-
+    // Initialize num_players + 1 for the target
     for (int i = 0; i < num_players+1; ++i)
     {
-        Agent a(this, i);
-        a.setup(GRID_X, GRID_Y, num_players, epsilon, lr, gamma);
+        // Initialize a new agent, passing parameters for Q-learning
+        Agent a(i, GRID_X, GRID_Y, num_players, epsilon, lr, gamma);
         agents_.push_back(a);
+
+        // Mark the agent on the board for plotting game
         game_board_[a.X()][a.Y()].push_back(i);
     }
 }
 
 void mas::Game::reset()
 {
+    steps_ = 0;
+    // clear game board for new epoch
     for (int i = 0; i < GRID_X; ++i)
     {
         for (int j = 0; j < GRID_Y; ++j)
@@ -38,7 +34,10 @@ void mas::Game::reset()
 
     for (auto &a : agents_)
     {
+        // reset each agent to initial location
         a.reset();
+
+        // reset gameboard
         game_board_[a.X()][a.Y()].push_back(a.agent_id_);
     }
 }
@@ -67,30 +66,38 @@ bool mas::Game::moveAgent(int agent_id, mas::Action action)
     }
     int cur_x = agents_[agent_id].X();
     int cur_y = agents_[agent_id].Y();
+    // check if agent going to move off board
     if ((cur_x + x_move < 0) || (cur_x + x_move >= mas::GRID_X) || (cur_y + y_move < 0) || (cur_y + y_move >= mas::GRID_Y))
         return false;
 
+    // remove old piece from game board
     auto iter_remove = std::remove(game_board_[cur_x][cur_y].begin(), game_board_[cur_x][cur_y].end(), agent_id);
     game_board_[cur_x][cur_y].erase(iter_remove, game_board_[cur_x][cur_y].end());
 
+    // move piece and update game board
     agents_[agent_id].move(x_move, y_move);
     game_board_[cur_x + x_move][cur_y + y_move].push_back(agent_id);
 
     return true;
 }
 
-void mas::Game::update()
+int mas::Game::update()
 {
+    int goal_reached = 0; // tracks which agent reaches goal. 0 is the goal itself and doesn't matter
+    // track initial state for calculating Q update
     State old_state = getState();
     for (auto &a : agents_)
     {
-        a.update(old_state);
+        // Keep picking moves till we get one that keeps us on the board
+        while (!moveAgent(a.agent_id_, a.determineMove(old_state)));
     }
 
+    // update score for each agent in new state
     for (auto &a : agents_)
     {
         if (a == agents_[0])
         {
+            goal_reached = a.agent_id_;
             a.addScore(30);
         }
         else
@@ -98,18 +105,22 @@ void mas::Game::update()
             a.addScore(-1);
         }
     }
+    // get new state for Q update
     State new_state = getState();
 
+    // Update Q table for each agent
     for (auto &a : agents_)
     {
         a.updatePolicy(old_state, new_state);
     }
     
     steps_++;
+    return goal_reached;
 }
 
 mas::State mas::Game::getState()
 {
+    // Generates a vector of coordinate pairs for indexing Q-table
     State s;
     for (auto &a : agents_)
     {
@@ -120,34 +131,27 @@ mas::State mas::Game::getState()
 
 int mas::Game::doEpoch(bool print_game)
 {
+    // reset agents to original locations
     reset();
-    int iter = 0;
-    int goal_reached = 0;
     do
     {
-        update();
+        // don't print the game every iteration. slooooow
         if (print_game)
         {
             print();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        for (auto &a : agents_)
-        {
-            if (a == agents_[0])
-            {
-                goal_reached = a.agent_id_;
-            }
-        }
-        iter++;
-    } while (goal_reached == 0);
-    // printw("agent %d reached goal in %d iterations\n", goal_reached, iter);
+        
+        // keep iterating till update returns a non zero agent reached goal
+    } while (update() == 0);
+
+    // printw("agent %d reached goal in %d iterations\n", goal_reached, steps_);
     // refresh();
-    return iter;
+    return steps_;
 }
 
 void mas::Game::print()
 {
-    // if (steps_ % 100000 != 0) return;
     clear();
     printw("--------------------\n");
     for (int j = 0; j < mas::GRID_Y; ++j)

@@ -22,7 +22,7 @@ namespace mas
         Game(int num_players, float epsilon, float lr, float gamma);
         void reset();
         bool moveAgent(int agent_id, Action action);
-        void update();
+        int update();
         void print();
         int doEpoch(bool print);
 
